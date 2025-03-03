@@ -12,10 +12,10 @@
     }
 
     body {
-      font-family: Arial, sans-serif;
-      background: #f0f2f5;
-      margin: 0;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: #f7f9fc;
       color: #333;
+      line-height: 1.6;
     }
 
     .navbar {
@@ -23,6 +23,8 @@
       color: #fff;
       padding: 20px;
       text-align: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-bottom: 2px solid rgba(0, 0, 0, 0.05);
     }
     .navbar h1 {
       font-weight: 600;
@@ -36,7 +38,10 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      margin: 20px auto;
+      max-width: 900px;
+      border-radius: 5px;
     }
     .ip-bar img {
       width: 20px;
@@ -56,6 +61,7 @@
       text-align: center;
       margin-bottom: 20px;
       font-weight: 600;
+      color: #222;
     }
 
     .log-list {
@@ -154,10 +160,13 @@
       "Your productivity documentation is ready!"
     ];
     
-    const subjects = [
-      "Invoice Update",
+    // Email subjects with date restrictions:
+    // "Welcome Email" and "Subscription Confirmation" only on start date.
+    // "Invoice Update" only in the middle/end.
+    const emailSubjects = [
       "Welcome Email",
-      "Subscription Confirmation"
+      "Subscription Confirmation",
+      "Invoice Update"
     ];
 
     const recipient = "bobjoebilly991@gmail.com";
@@ -169,17 +178,20 @@
     const devIcon = "https://img.icons8.com/ios-filled/20/007bff/source-code.png"; 
     const ipIcon = "https://img.icons8.com/ios-filled/20/007bff/network.png";
 
+    // Returns a random date between two dates.
     function randomDate(start, end) {
       return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
     }
 
+    // Formats the date to a localized string.
     function formatDate(date) {
       return date.toLocaleString("en-US", { hour12: true });
     }
 
+    // Chooses the appropriate icon based on the event type.
     function getEventIcon(event) {
       if (event.includes("Password")) return passwordIcon;
-      if (event.includes("Email") || event.includes("Opened") || event.includes("Sent")) return emailIcon;
+      if (event.includes("Email") || event.includes("Opened") || event.includes("Sent") || event.includes("Delivered")) return emailIcon;
       return devIcon;
     }
 
@@ -189,15 +201,30 @@
 
       for (let i = 0; i < 10; i++) {
         let event = events[Math.floor(Math.random() * events.length)];
-        let subject = subjects[Math.floor(Math.random() * subjects.length)];
+        // For non-email events, use a random date in the full range.
         let date = randomDate(startDate, endDate);
+        let subject = "";
 
+        // If event is an email-related activity, set subject and adjust date based on subject rules.
+        if (["Opened", "Delivered", "Sent"].includes(event)) {
+          subject = emailSubjects[Math.floor(Math.random() * emailSubjects.length)];
+          if (subject === "Welcome Email" || subject === "Subscription Confirmation") {
+            // Force log time to be on the start date (simulate a time within the first hour).
+            date = new Date(startDate.getTime() + Math.floor(Math.random() * 60) * 60000);
+          } else if (subject === "Invoice Update") {
+            // Force log time to be after the start date (middle or end).
+            const invoiceStart = new Date(startDate.getTime() + 24 * 60 * 60 * 1000); // startDate plus one day
+            date = randomDate(invoiceStart, endDate);
+          }
+        }
+
+        // Password events: adjust Password Changed to be shortly after Password Reset Request.
         if (event === "Password Reset Request") {
           passwordResetTime = new Date(date);
         } else if (event === "Password Changed" && passwordResetTime) {
-          let timeOffset = Math.floor(Math.random() * 30); // Between 0 to 29 minutes
+          let timeOffset = Math.floor(Math.random() * 30); // Between 0 to 29 minutes later
           date = new Date(passwordResetTime.getTime() + timeOffset * 60000);
-          passwordResetTime = null; // Reset to prevent multiple changes without a request
+          passwordResetTime = null;
         }
 
         const logItem = document.createElement("div");
@@ -212,7 +239,9 @@
 
         const infoContainer = document.createElement("div");
         infoContainer.classList.add("log-info");
-        if (event === "Opened" || event === "Delivered" || event === "Sent") {
+
+        // Add recipient and subject info for email events.
+        if (["Opened", "Delivered", "Sent"].includes(event)) {
           infoContainer.innerHTML = `<div><strong>Recipient:</strong> ${recipient}</div>`;
           infoContainer.innerHTML += `<div><strong>Subject:</strong> ${subject}</div>`;
         }

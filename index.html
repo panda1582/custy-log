@@ -1,114 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Log System</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-            padding: 20px;
-        }
-        .container {
-            max-width: 900px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
-        }
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        th, td {
-            padding: 12px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
-        th {
-            background-color: #343a40;
-            color: white;
-        }
-        .status-opened {
-            color: #007bff;
-            font-weight: bold;
-        }
-        .status-delivered {
-            color: #198754;
-            font-weight: bold;
-        }
-        .status-sent {
-            color: #6c757d;
-            font-weight: bold;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Email Log System</title>
+  <!-- You can include a Google Font for an even more premium feel -->
+  <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap"> -->
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif; /* Replace with 'Open Sans' if you import it */
+      background: #f0f2f5;
+      padding: 40px 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      padding: 30px 20px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    /* Container for all log items */
+    .log-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Each log entry card */
+    .log-item {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 15px 20px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-wrap: wrap;      /* Allows wrapping on smaller screens */
+      justify-content: space-between;
+      align-items: flex-start;
+      transition: box-shadow 0.3s ease;
+    }
+    .log-item:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    /* Status text style */
+    .status {
+      min-width: 80px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      margin-bottom: 10px; /* Adds spacing on smaller screens */
+    }
+    .status-opened {
+      color: #007bff;  /* Blue-ish */
+    }
+    .status-delivered {
+      color: #198754;  /* Green-ish */
+    }
+    .status-sent {
+      color: #6c757d;  /* Gray-ish */
+    }
+
+    /* Info block beside/under status */
+    .log-info {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .log-info div {
+      font-size: 0.95rem;
+      color: #444;
+    }
+    .log-info div strong {
+      font-weight: 600;
+      color: #333;
+    }
+
+    /* Responsive design adjustments */
+    @media (max-width: 600px) {
+      .log-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .status {
+        margin-bottom: 5px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Email Log System</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Event</th>
-                    <th>Recipient</th>
-                    <th>Subject</th>
-                    <th>Date & Time</th>
-                    <th>Tag</th>
-                </tr>
-            </thead>
-            <tbody id="log-body">
-                <!-- Rows will be inserted dynamically -->
-            </tbody>
-        </table>
+  <div class="container">
+    <h2>Email Log System</h2>
+
+    <div class="log-list" id="log-list">
+      <!-- Log items will be inserted dynamically -->
     </div>
+  </div>
 
-    <script>
-        const events = ["Opened", "Delivered", "Sent"];
-        const subjects = ["Invoice Update", "Meeting Reminder", "Welcome Email", "Subscription Confirmation"];
-        const recipient = "bobjoebilly991@gmail.com";
-        const startDate = new Date("2025-02-08");
-        const endDate = new Date("2025-02-26");
+  <script>
+    // Sample data
+    const events = ["Opened", "Delivered", "Sent"];
+    const subjects = ["Invoice Update", "Meeting Reminder", "Welcome Email", "Subscription Confirmation"];
+    const recipient = "bobjoebilly991@gmail.com";
+    const startDate = new Date("2025-02-08");
+    const endDate = new Date("2025-02-26");
 
-        function randomDate(start, end) {
-            return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-        }
+    function randomDate(start, end) {
+      return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+    }
 
-        function formatDate(date) {
-            return date.toLocaleString("en-US", { hour12: true });
-        }
+    function formatDate(date) {
+      return date.toLocaleString("en-US", { hour12: true });
+    }
 
-        function getStatusClass(event) {
-            if (event === "Opened") return "status-opened";
-            if (event === "Delivered") return "status-delivered";
-            return "status-sent";
-        }
+    function getStatusClass(event) {
+      if (event === "Opened") return "status-opened";
+      if (event === "Delivered") return "status-delivered";
+      return "status-sent";
+    }
 
-        function generateLogs() {
-            const tbody = document.getElementById("log-body");
-            for (let i = 0; i < 10; i++) {
-                let event = events[Math.floor(Math.random() * events.length)];
-                let subject = subjects[Math.floor(Math.random() * subjects.length)];
-                let date = randomDate(startDate, endDate);
-                let row = document.createElement("tr");
-                row.innerHTML = `
-                    <td class="${getStatusClass(event)}">${event}</td>
-                    <td>${recipient}</td>
-                    <td>${subject}</td>
-                    <td>${formatDate(date)}</td>
-                    <td>#EmailLog</td>
-                `;
-                tbody.appendChild(row);
-            }
-        }
+    function generateLogs() {
+      const logList = document.getElementById("log-list");
+      for (let i = 0; i < 10; i++) {
+        let event = events[Math.floor(Math.random() * events.length)];
+        let subject = subjects[Math.floor(Math.random() * subjects.length)];
+        let date = randomDate(startDate, endDate);
 
-        generateLogs();
-    </script>
+        // Create log item
+        const logItem = document.createElement("div");
+        logItem.classList.add("log-item");
+
+        // Insert the status as a separate block
+        logItem.innerHTML = `
+          <div class="status ${getStatusClass(event)}">${event}</div>
+          <div class="log-info">
+            <div><strong>Recipient:</strong> ${recipient}</div>
+            <div><strong>Subject:</strong> ${subject}</div>
+            <div><strong>Date & Time:</strong> ${formatDate(date)}</div>
+            <div><strong>Tag:</strong> #EmailLog</div>
+          </div>
+        `;
+
+        logList.appendChild(logItem);
+      }
+    }
+
+    generateLogs();
+  </script>
 </body>
 </html>

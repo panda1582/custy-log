@@ -147,20 +147,7 @@
   <script>
     const ipAddress = "192.168.1.10"; // Change this to any IP you need
 
-    const events = [
-      "Opened",
-      "Delivered",
-      "Sent",
-      "Password Reset Request",
-      "Password Changed",
-      "Git connection successful",
-      "Project Created",
-      "Project Saved",
-      "Successfully logged in",
-      "Your productivity documentation is ready!"
-    ];
-    
-    // Email subjects with date restrictions:
+    // Email subjects with restrictions:
     // "Welcome Email" and "Subscription Confirmation" only on start date.
     // "Invoice Update" only in the middle/end.
     const emailSubjects = [
@@ -188,69 +175,77 @@
       return date.toLocaleString("en-US", { hour12: true });
     }
 
-    // Chooses the appropriate icon based on the event type.
+    // Returns the appropriate icon for an event.
     function getEventIcon(event) {
       if (event.includes("Password")) return passwordIcon;
-      if (event.includes("Email") || event.includes("Opened") || event.includes("Sent") || event.includes("Delivered")) return emailIcon;
+      if (["Sent", "Delivered", "Opened"].includes(event)) return emailIcon;
       return devIcon;
     }
 
+    // Generates an email chain with three events:
+    // Sent (at 7:40 PM), Delivered (+5 mins), Opened (+10 mins)
+    function generateEmailChain(subject, baseDate) {
+      // Force the base time to 7:40 PM on that day.
+      let sentTime = new Date(baseDate);
+      sentTime.setHours(19, 40, 0, 0);
+
+      const deliveredTime = new Date(sentTime.getTime() + 5 * 60000);
+      const openedTime = new Date(sentTime.getTime() + 10 * 60000);
+
+      return [
+        { event: "Sent", date: sentTime },
+        { event: "Delivered", date: deliveredTime },
+        { event: "Opened", date: openedTime }
+      ];
+    }
+
+    // Generates logs. For email events, it creates an email chain (Sent, Delivered, Opened).
     function generateLogs() {
       const logList = document.getElementById("log-list");
-      let passwordResetTime = null;
+      
+      // For demonstration, generate 5 email chains.
+      for (let i = 0; i < 5; i++) {
+        // Randomly pick an email subject.
+        const subject = emailSubjects[Math.floor(Math.random() * emailSubjects.length)];
+        let baseDate;
 
-      for (let i = 0; i < 10; i++) {
-        let event = events[Math.floor(Math.random() * events.length)];
-        // For non-email events, use a random date in the full range.
-        let date = randomDate(startDate, endDate);
-        let subject = "";
-
-        // If event is an email-related activity, set subject and adjust date based on subject rules.
-        if (["Opened", "Delivered", "Sent"].includes(event)) {
-          subject = emailSubjects[Math.floor(Math.random() * emailSubjects.length)];
-          if (subject === "Welcome Email" || subject === "Subscription Confirmation") {
-            // Force log time to be on the start date (simulate a time within the first hour).
-            date = new Date(startDate.getTime() + Math.floor(Math.random() * 60) * 60000);
-          } else if (subject === "Invoice Update") {
-            // Force log time to be after the start date (middle or end).
-            const invoiceStart = new Date(startDate.getTime() + 24 * 60 * 60 * 1000); // startDate plus one day
-            date = randomDate(invoiceStart, endDate);
-          }
+        if (subject === "Welcome Email" || subject === "Subscription Confirmation") {
+          // Force the date to be the start date.
+          baseDate = new Date(startDate);
+        } else if (subject === "Invoice Update") {
+          // Invoice Update is set to a random date after startDate (middle or end).
+          const invoiceStart = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+          baseDate = randomDate(invoiceStart, endDate);
         }
+        // Set the time to 7:40 PM regardless.
+        baseDate.setHours(19, 40, 0, 0);
 
-        // Password events: adjust Password Changed to be shortly after Password Reset Request.
-        if (event === "Password Reset Request") {
-          passwordResetTime = new Date(date);
-        } else if (event === "Password Changed" && passwordResetTime) {
-          let timeOffset = Math.floor(Math.random() * 30); // Between 0 to 29 minutes later
-          date = new Date(passwordResetTime.getTime() + timeOffset * 60000);
-          passwordResetTime = null;
-        }
+        // Generate the email chain.
+        const chain = generateEmailChain(subject, baseDate);
 
-        const logItem = document.createElement("div");
-        logItem.classList.add("log-item");
+        // Append each event in the chain to the log list.
+        chain.forEach(item => {
+          const logItem = document.createElement("div");
+          logItem.classList.add("log-item");
 
-        const eventBlock = document.createElement("div");
-        eventBlock.classList.add("log-event");
-        eventBlock.innerHTML = `
-          <img src="${getEventIcon(event)}" alt="Event Icon" />
-          <span class="event-name">${event}</span>
-        `;
+          const eventBlock = document.createElement("div");
+          eventBlock.classList.add("log-event");
+          eventBlock.innerHTML = `
+            <img src="${getEventIcon(item.event)}" alt="Event Icon" />
+            <span class="event-name">${item.event}</span>
+          `;
 
-        const infoContainer = document.createElement("div");
-        infoContainer.classList.add("log-info");
-
-        // Add recipient and subject info for email events.
-        if (["Opened", "Delivered", "Sent"].includes(event)) {
+          const infoContainer = document.createElement("div");
+          infoContainer.classList.add("log-info");
           infoContainer.innerHTML = `<div><strong>Recipient:</strong> ${recipient}</div>`;
           infoContainer.innerHTML += `<div><strong>Subject:</strong> ${subject}</div>`;
-        }
-        infoContainer.innerHTML += `<div><strong>Date & Time:</strong> ${formatDate(date)}</div>`;
-        infoContainer.innerHTML += `<div><strong>Tag:</strong> #ActivityLog</div>`;
+          infoContainer.innerHTML += `<div><strong>Date & Time:</strong> ${formatDate(item.date)}</div>`;
+          infoContainer.innerHTML += `<div><strong>Tag:</strong> #ActivityLog</div>`;
 
-        logItem.appendChild(eventBlock);
-        logItem.appendChild(infoContainer);
-        logList.appendChild(logItem);
+          logItem.appendChild(eventBlock);
+          logItem.appendChild(infoContainer);
+          logList.appendChild(logItem);
+        });
       }
     }
 

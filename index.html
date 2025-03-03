@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Email Log System</title>
-  <!-- You can include a Google Font for an even more premium feel -->
+  <!-- Optional Google Font for a more premium feel -->
   <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap"> -->
   <style>
     * {
@@ -14,72 +14,103 @@
     }
 
     body {
-      font-family: Arial, sans-serif; /* Replace with 'Open Sans' if you import it */
+      font-family: Arial, sans-serif; /* Replace with 'Open Sans' if imported */
       background: #f0f2f5;
-      padding: 40px 0;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      background: #ffffff;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-      padding: 30px 20px;
-    }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 30px;
-      font-weight: 600;
+      margin: 0;
       color: #333;
     }
 
-    /* Container for all log items */
+    /* ===== NAVBAR / HEADER ===== */
+    .navbar {
+      background: linear-gradient(45deg, #0069d9, #007bff);
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+    .navbar h1 {
+      font-weight: 600;
+      font-size: 1.8rem;
+    }
+
+    /* ===== IP BAR ===== */
+    .ip-bar {
+      background: #fff;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    }
+    .ip-bar img {
+      width: 20px;
+      height: 20px;
+      display: inline-block;
+    }
+    .ip-bar span {
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    /* ===== MAIN CONTAINER ===== */
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    /* ===== LOG LIST ===== */
     .log-list {
       display: flex;
       flex-direction: column;
       gap: 20px;
     }
 
-    /* Each log entry card */
+    /* ===== LOG CARD ===== */
     .log-item {
       background-color: #ffffff;
       border-radius: 8px;
       padding: 15px 20px;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
       display: flex;
-      flex-wrap: wrap;      /* Allows wrapping on smaller screens */
-      justify-content: space-between;
+      flex-direction: row;
+      flex-wrap: wrap;
       align-items: flex-start;
+      justify-content: space-between;
       transition: box-shadow 0.3s ease;
     }
     .log-item:hover {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
 
-    /* Status text style */
-    .status {
-      min-width: 80px;
-      font-size: 0.95rem;
+    /* Event label + icon */
+    .log-event {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 170px; /* ensures enough space on smaller screens */
+      margin-bottom: 8px;
+    }
+    .log-event img {
+      width: 20px;
+      height: 20px;
+    }
+    .log-event .event-name {
+      font-size: 1rem;
       font-weight: bold;
-      margin-bottom: 10px; /* Adds spacing on smaller screens */
-    }
-    .status-opened {
-      color: #007bff;  /* Blue-ish */
-    }
-    .status-delivered {
-      color: #198754;  /* Green-ish */
-    }
-    .status-sent {
-      color: #6c757d;  /* Gray-ish */
     }
 
-    /* Info block beside/under status */
+    /* Info blocks */
     .log-info {
       display: flex;
       flex-direction: column;
       gap: 5px;
+      margin-bottom: 8px;
     }
     .log-info div {
       font-size: 0.95rem;
@@ -96,69 +127,134 @@
         flex-direction: column;
         align-items: flex-start;
       }
-      .status {
-        margin-bottom: 5px;
+      .log-event {
+        margin-bottom: 10px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Email Log System</h2>
 
+  <!-- Header / Navbar -->
+  <div class="navbar">
+    <h1>Email Log System</h1>
+  </div>
+
+  <!-- IP Address Bar -->
+  <div class="ip-bar" id="ip-bar">
+    <!-- IP Icon + IP text will be inserted by JS -->
+  </div>
+
+  <div class="container">
+    <h2>Activity Logs</h2>
     <div class="log-list" id="log-list">
       <!-- Log items will be inserted dynamically -->
     </div>
   </div>
 
   <script>
-    // Sample data
-    const events = ["Opened", "Delivered", "Sent"];
-    const subjects = ["Invoice Update", "Meeting Reminder", "Welcome Email", "Subscription Confirmation"];
+    /********************************************
+     *   MANUAL VARIABLES
+     ********************************************/
+    const ipAddress = "192.168.1.10"; // Change this to any IP you need
+
+    /********************************************
+     *   DATA SOURCE
+     ********************************************/
+    const events = [
+      "Opened",
+      "Delivered",
+      "Sent",
+      "Password Reset Request",
+      "Password Changed"
+    ];
+    const subjects = [
+      "Invoice Update",
+      "Welcome Email",
+      "Subscription Confirmation"
+      // Removed "Meeting Reminder"
+    ];
     const recipient = "bobjoebilly991@gmail.com";
     const startDate = new Date("2025-02-08");
     const endDate = new Date("2025-02-26");
 
+    /********************************************
+     *   ICON PATHS (all from icons8, #007bff color)
+     ********************************************/
+    const emailIcon = "https://img.icons8.com/ios-filled/20/007bff/new-post.png"; 
+    const passwordIcon = "https://img.icons8.com/ios-filled/20/007bff/password1.png";
+    const ipIcon      = "https://img.icons8.com/ios-filled/20/007bff/network.png";
+
+    /********************************************
+     *   HELPER FUNCTIONS
+     ********************************************/
     function randomDate(start, end) {
       return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
     }
 
     function formatDate(date) {
+      // You can customize the locale and format
       return date.toLocaleString("en-US", { hour12: true });
     }
 
-    function getStatusClass(event) {
-      if (event === "Opened") return "status-opened";
-      if (event === "Delivered") return "status-delivered";
-      return "status-sent";
+    // Returns either the password icon for password-related events, or the email icon otherwise
+    function getEventIcon(event) {
+      if (event.includes("Password")) {
+        return passwordIcon;
+      }
+      return emailIcon;
     }
 
     function generateLogs() {
       const logList = document.getElementById("log-list");
+
       for (let i = 0; i < 10; i++) {
-        let event = events[Math.floor(Math.random() * events.length)];
-        let subject = subjects[Math.floor(Math.random() * subjects.length)];
-        let date = randomDate(startDate, endDate);
+        const event = events[Math.floor(Math.random() * events.length)];
+        const subject = subjects[Math.floor(Math.random() * subjects.length)];
+        const date = randomDate(startDate, endDate);
 
         // Create log item
         const logItem = document.createElement("div");
         logItem.classList.add("log-item");
 
-        // Insert the status as a separate block
-        logItem.innerHTML = `
-          <div class="status ${getStatusClass(event)}">${event}</div>
-          <div class="log-info">
-            <div><strong>Recipient:</strong> ${recipient}</div>
-            <div><strong>Subject:</strong> ${subject}</div>
-            <div><strong>Date & Time:</strong> ${formatDate(date)}</div>
-            <div><strong>Tag:</strong> #EmailLog</div>
-          </div>
+        // Create event block with icon
+        const eventBlock = document.createElement("div");
+        eventBlock.classList.add("log-event");
+        eventBlock.innerHTML = `
+          <img src="${getEventIcon(event)}" alt="Event Icon" />
+          <span class="event-name">${event}</span>
         `;
+
+        // Create info container
+        const infoContainer = document.createElement("div");
+        infoContainer.classList.add("log-info");
+        infoContainer.innerHTML = `
+          <div><strong>Recipient:</strong> ${recipient}</div>
+          <div><strong>Subject:</strong> ${subject}</div>
+          <div><strong>Date & Time:</strong> ${formatDate(date)}</div>
+          <div><strong>Tag:</strong> #EmailLog</div>
+        `;
+
+        logItem.appendChild(eventBlock);
+        logItem.appendChild(infoContainer);
 
         logList.appendChild(logItem);
       }
     }
 
+    // Insert IP into the IP bar
+    function setIPBar(ip) {
+      const ipBar = document.getElementById("ip-bar");
+      ipBar.innerHTML = `
+        <img src="${ipIcon}" alt="IP Icon"/>
+        <span>IP Address: ${ip}</span>
+      `;
+    }
+
+    /********************************************
+     *   INITIALIZE PAGE
+     ********************************************/
+    setIPBar(ipAddress);
     generateLogs();
   </script>
 </body>

@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Advanced Email & System Logs</title>
-  <!-- Optional Google Font for a more premium feel -->
-  <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap"> -->
+  <title>Advanced Log System</title>
   <style>
     * {
       box-sizing: border-box;
@@ -14,13 +12,12 @@
     }
 
     body {
-      font-family: Arial, sans-serif; /* Replace with 'Open Sans' if imported */
+      font-family: Arial, sans-serif;
       background: #f0f2f5;
       margin: 0;
       color: #333;
     }
 
-    /* ===== NAVBAR / HEADER ===== */
     .navbar {
       background: linear-gradient(45deg, #0069d9, #007bff);
       color: #fff;
@@ -32,7 +29,6 @@
       font-size: 1.8rem;
     }
 
-    /* ===== IP BAR ===== */
     .ip-bar {
       background: #fff;
       padding: 15px 20px;
@@ -45,14 +41,12 @@
     .ip-bar img {
       width: 20px;
       height: 20px;
-      display: inline-block;
     }
     .ip-bar span {
       font-size: 1rem;
       font-weight: 500;
     }
 
-    /* ===== MAIN CONTAINER ===== */
     .container {
       max-width: 900px;
       margin: 30px auto;
@@ -64,14 +58,12 @@
       font-weight: 600;
     }
 
-    /* ===== LOG LIST ===== */
     .log-list {
       display: flex;
       flex-direction: column;
       gap: 20px;
     }
 
-    /* ===== LOG CARD ===== */
     .log-item {
       background-color: #ffffff;
       border-radius: 8px;
@@ -87,12 +79,11 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
 
-    /* Event label + icon */
     .log-event {
       display: flex;
       align-items: center;
       gap: 8px;
-      min-width: 220px; /* ensures enough space on smaller screens */
+      min-width: 200px;
       margin-bottom: 8px;
     }
     .log-event img {
@@ -104,7 +95,6 @@
       font-weight: bold;
     }
 
-    /* Info blocks */
     .log-info {
       display: flex;
       flex-direction: column;
@@ -120,7 +110,6 @@
       color: #333;
     }
 
-    /* Responsive design adjustments */
     @media (max-width: 600px) {
       .log-item {
         flex-direction: column;
@@ -134,14 +123,12 @@
 </head>
 <body>
 
-  <!-- Header / Navbar -->
   <div class="navbar">
-    <h1>Advanced Email & System Logs</h1>
+    <h1>Advanced Log System</h1>
   </div>
 
-  <!-- IP Address Bar -->
   <div class="ip-bar" id="ip-bar">
-    <!-- IP Icon + IP text will be inserted by JS -->
+    <!-- IP Icon + IP text will be inserted dynamically -->
   </div>
 
   <div class="container">
@@ -152,274 +139,101 @@
   </div>
 
   <script>
-    /********************************************
-     *      CONFIGURABLE VARIABLES
-     ********************************************/
-    const ipAddress = "192.168.1.10"; // Change this to any IP you like
-    const startDate = new Date("2025-02-08");
-    const endDate   = new Date("2025-02-26");
-    const totalLogs = 20; // How many total logs to generate
+    const ipAddress = "192.168.1.10"; // Change this to any IP you need
 
-    /********************************************
-     *     ICONS (all color #007bff)
-     ********************************************/
-    // Example icons from icons8.com:
-    const ICONS = {
-      email:    "https://img.icons8.com/ios-filled/20/007bff/new-post.png",
-      password: "https://img.icons8.com/ios-filled/20/007bff/password1.png",
-      dev:      "https://img.icons8.com/ios-filled/20/007bff/source-code.png",
-      ip:       "https://img.icons8.com/ios-filled/20/007bff/network.png"
-    };
-
-    /********************************************
-     *      EVENT DEFINITIONS
-     ********************************************/
-    // "Event" is the main action. For email events, we also have a "subject".
-    // We'll create 3 categories: Email, Password, and System/Dev events.
-
-    // Email events
-    const emailEvents = ["Opened", "Delivered", "Sent"];
-    // Email subjects
-    const emailSubjects = [
+    const events = [
+      "Opened",
+      "Delivered",
+      "Sent",
+      "Password Reset Request",
+      "Password Changed",
+      "Git connection successful",
+      "Project Created",
+      "Project Saved",
+      "Successfully logged in",
+      "Your productivity documentation is ready!"
+    ];
+    
+    const subjects = [
       "Invoice Update",
       "Welcome Email",
       "Subscription Confirmation"
     ];
 
-    // Password events (always in pairs)
-    const passwordEvents = ["Password Reset Request", "Password Changed"];
+    const recipient = "bobjoebilly991@gmail.com";
+    const startDate = new Date("2025-02-08");
+    const endDate = new Date("2025-02-26");
 
-    // System/Dev events
-    const devEvents = [
-      "successfully logged in",
+    const emailIcon = "https://img.icons8.com/ios-filled/20/007bff/new-post.png"; 
+    const passwordIcon = "https://img.icons8.com/ios-filled/20/007bff/password1.png";
+    const devIcon = "https://img.icons8.com/ios-filled/20/007bff/source-code.png"; 
+    const ipIcon = "https://img.icons8.com/ios-filled/20/007bff/network.png";
 
-    ];
-
-    /********************************************
-     *     UTILITY FUNCTIONS
-     ********************************************/
-    // Returns a random number between min and max (inclusive)
-    function randInt(min, max) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
+    function randomDate(start, end) {
+      return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
     }
 
-    // Return true with given probability (e.g., 0.2 => 20% chance)
-    function chance(prob) {
-      return Math.random() < prob;
-    }
-
-    // Generate a random date between 'start' and 'end'
-    // But with constraints on time:
-    //  - 80% in 'reasonable hours' (7 AM - 10 PM)
-    //  - 20% around midnight or 2 AM
-    function randomDateTime(start, end) {
-      // 1) Randomly pick a day between start & end
-      const dateRange = end.getTime() - start.getTime();
-      const randomTime = start.getTime() + Math.random() * dateRange;
-      const chosenDate = new Date(randomTime);
-
-      // 2) Decide if we use "rare" time or normal time
-      let hour, minute = randInt(0, 59);
-
-      if (chance(0.2)) {
-        // 20% chance => midnight or 2 AM
-        hour = chance(0.5) ? 0 : 2;  // 50-50 midnight or 2 AM
-      } else {
-        // 80% chance => typical hours 7 AM to 22 (10 PM)
-        hour = randInt(7, 22);
-      }
-
-      chosenDate.setHours(hour);
-      chosenDate.setMinutes(minute);
-      chosenDate.setSeconds(0);
-      return chosenDate;
-    }
-
-    // Format the date/time nicely
-    function formatDateTime(date) {
+    function formatDate(date) {
       return date.toLocaleString("en-US", { hour12: true });
     }
 
-    // Returns an icon depending on the type of event
-    // We'll keep it simple: "email", "password", or "dev"
     function getEventIcon(event) {
-      // Check if it's a password event
-      if (event === "Password Reset Request" || event === "Password Changed") {
-        return ICONS.password;
-      }
-      // Check if it's an email event
-      if (emailEvents.includes(event)) {
-        return ICONS.email;
-      }
-      // Otherwise treat as dev/system event
-      return ICONS.dev;
+      if (event.includes("Password")) return passwordIcon;
+      if (event.includes("Email") || event.includes("Opened") || event.includes("Sent")) return emailIcon;
+      return devIcon;
     }
 
-    /********************************************
-     *   LOG GENERATION WITH CONSTRAINTS
-     ********************************************/
-
-    // 1) Generate some email logs
-    //    - If subject is "Welcome Email" or "Subscription Confirmation", date = startDate (random time that day)
-    //    - Otherwise random date between start and end
-    function generateEmailLog() {
-      const event = emailEvents[randInt(0, emailEvents.length - 1)];
-      const subject = emailSubjects[randInt(0, emailSubjects.length - 1)];
-
-      let date;
-      if (subject === "Welcome Email" || subject === "Subscription Confirmation") {
-        // Force the date to be the startDate (random time that day)
-        // We'll choose a random hour/minute, but keep the same day
-        date = new Date(startDate.getTime());
-        // 80% normal hours, 20% midnight/2 AM on that same day
-        if (chance(0.2)) {
-          date.setHours(chance(0.5) ? 0 : 2);
-        } else {
-          date.setHours(randInt(7, 22));
-        }
-        date.setMinutes(randInt(0, 59));
-        date.setSeconds(0);
-      } else {
-        // Normal date range
-        date = randomDateTime(startDate, endDate);
-      }
-
-      return {
-        event,
-        subject,
-        date,
-        category: "email"
-      };
-    }
-
-    // 2) Generate password events in a pair:
-    //    - "Password Reset Request" at time T
-    //    - "Password Changed" at time T + a small random offset
-    function generatePasswordPair() {
-      const resetDate = randomDateTime(startDate, endDate);
-      // We'll ensure the change happens after reset by up to 48h
-      // but not exceeding endDate
-      const offsetHours = randInt(1, 48);
-      const changeDate = new Date(resetDate.getTime() + offsetHours * 3600000);
-
-      // If the changeDate goes beyond endDate, clamp it
-      if (changeDate > endDate) changeDate.setTime(endDate.getTime());
-
-      const log1 = {
-        event: "Password Reset Request",
-        subject: null,
-        date: resetDate,
-        category: "password"
-      };
-      const log2 = {
-        event: "Password Changed",
-        subject: null,
-        date: changeDate,
-        category: "password"
-      };
-
-      return [log1, log2];
-    }
-
-    // 3) Generate a dev/system log (e.g., "Successfully connected to server", etc.)
-    function generateDevLog() {
-      const event = devEvents[randInt(0, devEvents.length - 1)];
-      // dev logs do not have "subject," but we can store extra info if needed
-      const date = randomDateTime(startDate, endDate);
-
-      return {
-        event,
-        subject: null,
-        date,
-        category: "dev"
-      };
-    }
-
-    // Let's build all logs to fill "totalLogs" count:
-    // We'll incorporate at least one password pair. 
-    // The rest can be a mix of random email or dev logs.
-    function buildAllLogs() {
-      let logs = [];
-
-      // 1) We know we want some password pairs:
-      //    For demonstration, let's do 2 pairs (4 logs).
-      const pair1 = generatePasswordPair();
-      const pair2 = generatePasswordPair();
-      logs.push(...pair1, ...pair2);
-
-      // 2) Fill up the rest of logs up to totalLogs with random email or dev logs
-      //    We'll do a random pick: 50% email, 50% dev (you can adjust as you wish)
-      while (logs.length < totalLogs) {
-        if (chance(0.5)) {
-          logs.push(generateEmailLog());
-        } else {
-          logs.push(generateDevLog());
-        }
-      }
-
-      // 3) Sort logs by date ascending
-      logs.sort((a, b) => a.date - b.date);
-
-      return logs;
-    }
-
-    /********************************************
-     *   RENDER LOGS IN THE DOM
-     ********************************************/
-    function renderLogs(logs) {
+    function generateLogs() {
       const logList = document.getElementById("log-list");
-      logList.innerHTML = ""; // Clear any existing
+      let passwordResetTime = null;
 
-      logs.forEach((log) => {
+      for (let i = 0; i < 10; i++) {
+        let event = events[Math.floor(Math.random() * events.length)];
+        let subject = subjects[Math.floor(Math.random() * subjects.length)];
+        let date = randomDate(startDate, endDate);
+
+        if (event === "Password Reset Request") {
+          passwordResetTime = new Date(date);
+        } else if (event === "Password Changed" && passwordResetTime) {
+          let timeOffset = Math.floor(Math.random() * 30); // Between 0 to 29 minutes
+          date = new Date(passwordResetTime.getTime() + timeOffset * 60000);
+          passwordResetTime = null; // Reset to prevent multiple changes without a request
+        }
+
         const logItem = document.createElement("div");
         logItem.classList.add("log-item");
 
-        // ----- Event Block with Icon -----
         const eventBlock = document.createElement("div");
         eventBlock.classList.add("log-event");
         eventBlock.innerHTML = `
-          <img src="${getEventIcon(log.event)}" alt="Event Icon" />
-          <span class="event-name">${log.event}</span>
+          <img src="${getEventIcon(event)}" alt="Event Icon" />
+          <span class="event-name">${event}</span>
         `;
 
-        // ----- Info Container -----
         const infoContainer = document.createElement("div");
         infoContainer.classList.add("log-info");
-
-        // Basic info lines (subject if available, date, maybe tag)
-        if (log.subject) {
-          // It's an email event
-          infoContainer.innerHTML += `<div><strong>Subject:</strong> ${log.subject}</div>`;
+        if (event === "Opened" || event === "Delivered" || event === "Sent") {
+          infoContainer.innerHTML = `<div><strong>Recipient:</strong> ${recipient}</div>`;
+          infoContainer.innerHTML += `<div><strong>Subject:</strong> ${subject}</div>`;
         }
-        // You can add more details based on your preference
-        infoContainer.innerHTML += `<div><strong>Date & Time:</strong> ${formatDateTime(log.date)}</div>`;
-        infoContainer.innerHTML += `<div><strong>Tag:</strong> #EmailLog</div>`;
+        infoContainer.innerHTML += `<div><strong>Date & Time:</strong> ${formatDate(date)}</div>`;
+        infoContainer.innerHTML += `<div><strong>Tag:</strong> #ActivityLog</div>`;
 
         logItem.appendChild(eventBlock);
         logItem.appendChild(infoContainer);
-
         logList.appendChild(logItem);
-      });
+      }
     }
 
-    /********************************************
-     *   INITIAL SETUP
-     ********************************************/
-    // Insert IP into the IP bar
     function setIPBar(ip) {
-      const ipBar = document.getElementById("ip-bar");
-      ipBar.innerHTML = `
-        <img src="${ICONS.ip}" alt="IP Icon"/>
+      document.getElementById("ip-bar").innerHTML = `
+        <img src="${ipIcon}" alt="IP Icon"/>
         <span>IP Address: ${ip}</span>
       `;
     }
 
-    // MAIN
     setIPBar(ipAddress);
-
-    // Generate all logs with constraints
-    const allLogs = buildAllLogs();
-    renderLogs(allLogs);
+    generateLogs();
   </script>
 </body>
 </html>

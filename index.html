@@ -10,15 +10,12 @@
       margin: 0;
       padding: 0;
     }
-
     body {
       font-family: Arial, sans-serif;
       background: #f0f2f5;
       margin: 0;
       color: #333;
     }
-
-    /* ===== NAVBAR / HEADER ===== */
     .navbar {
       background: linear-gradient(45deg, #0069d9, #007bff);
       color: #fff;
@@ -29,8 +26,6 @@
       font-weight: 600;
       font-size: 1.8rem;
     }
-
-    /* ===== IP BAR ===== */
     .ip-bar {
       background: #fff;
       padding: 15px 20px;
@@ -43,14 +38,11 @@
     .ip-bar img {
       width: 20px;
       height: 20px;
-      display: inline-block;
     }
     .ip-bar span {
       font-size: 1rem;
       font-weight: 500;
     }
-
-    /* ===== MAIN CONTAINER ===== */
     .container {
       max-width: 900px;
       margin: 30px auto;
@@ -61,15 +53,11 @@
       margin-bottom: 20px;
       font-weight: 600;
     }
-
-    /* ===== LOG LIST ===== */
     .log-list {
       display: flex;
       flex-direction: column;
       gap: 20px;
     }
-
-    /* ===== LOG CARD ===== */
     .log-item {
       background-color: #ffffff;
       border-radius: 8px;
@@ -85,7 +73,6 @@
     .log-item:hover {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
-
     .log-event {
       display: flex;
       align-items: center;
@@ -101,7 +88,6 @@
       font-size: 1rem;
       font-weight: bold;
     }
-
     .log-info {
       display: flex;
       flex-direction: column;
@@ -116,8 +102,6 @@
       font-weight: 600;
       color: #333;
     }
-
-    /* Responsive design adjustments */
     @media (max-width: 600px) {
       .log-item {
         flex-direction: column;
@@ -131,86 +115,176 @@
 </head>
 <body>
 
-  <!-- Header / Navbar -->
+  <!-- Header -->
   <div class="navbar">
     <h1>Email Log System</h1>
   </div>
 
   <!-- IP Address Bar -->
-  <div class="ip-bar" id="ip-bar">
-    <!-- IP Icon + IP text will be inserted by JS -->
-  </div>
+  <div class="ip-bar" id="ip-bar"></div>
 
   <div class="container">
     <h2>Activity Logs</h2>
     <div class="log-list" id="log-list">
-      <!-- Log items will be inserted dynamically -->
+      <!-- Dynamically inserted logs -->
     </div>
   </div>
 
   <script>
     /********************************************
-     *   MANUAL VARIABLES
+     *   CONFIGURABLE VALUES
      ********************************************/
-    // Change the IP here anytime you like
-    const ipAddress = "99.246.233.89";
+    const ipAddress = "99.246.233.89"; // Change IP address anytime
 
-    // Common icons (all from icons8, color #007bff)
     const emailIcon = "https://img.icons8.com/ios-filled/20/007bff/new-post.png"; 
     const passwordIcon = "https://img.icons8.com/ios-filled/20/007bff/password1.png";
-    const ipIcon      = "https://img.icons8.com/ios-filled/20/007bff/network.png";
+    const ipIcon = "https://img.icons8.com/ios-filled/20/007bff/network.png";
+
+    // The earliest log time (purchase date/time)
+    const baseTime = new Date("2025-02-07T18:03:00"); // 6:03 PM (hardcoded)
+
+    // For random logs, we might want to reference the same recipient
+    const defaultRecipient = "bobjoebilly991@gmail.com";
 
     /********************************************
-     *   STATIC LOG DATA (bottom = oldest, top = newest)
+     *  MANDATORY LOGS (delivered -> opened)
+     *  We'll build them with random intervals
      ********************************************/
-    const logs = [
-      {
-        event: "Delivered",
-        subject: "Subscription Confirmation",
-        recipient: "bobjoebilly991@gmail.com",
-        date: new Date("2025-02-07T18:03:00"), // 6:03 PM
-        tag: "#EmailLog"
-      },
-      {
-        event: "Opened",
-        subject: "Subscription Confirmation",
-        recipient: "bobjoebilly991@gmail.com",
-        date: new Date("2025-02-07T18:05:00"), // 6:05 PM
-        tag: "#EmailLog"
-      },
-      {
-        event: "Delivered",
-        subject: "Welcome Email",
-        recipient: "bobjoebilly991@gmail.com",
-        date: new Date("2025-02-07T18:10:00"), // 6:10 PM
-        tag: "#EmailLog"
-      },
-      {
-        event: "Opened",
-        subject: "Welcome Email",
-        recipient: "bobjoebilly991@gmail.com",
-        date: new Date("2025-02-07T18:15:00"), // 6:15 PM
-        tag: "#EmailLog"
-      }
+    const mandatoryEvents = [
+      { event: "Delivered", subject: "Subscription Confirmation" },
+      { event: "Opened",    subject: "Subscription Confirmation" },
+      { event: "Delivered", subject: "Welcome Email" },
+      { event: "Opened",    subject: "Welcome Email" }
     ];
+
+    /********************************************
+     *  OTHER POSSIBLE LOGS
+     *  We'll pick randomly from these
+     ********************************************/
+    const possibleEvents = [
+      // Each entry can define an event and subject
+      { event: "Password Reset Request", subject: "Account Security" },
+      { event: "Password Changed", subject: "Account Security" },
+      { event: "User Logged in Successfully", subject: null },
+      { event: "Project Saved", subject: "Project #123" },
+      { event: "Project Deleted", subject: "Project #456" },
+      { event: "Transcript Generated from Project", subject: "Project #123" },
+      { event: "Invoice Update", subject: "Invoice #789" },
+      { event: "Subscription Update", subject: "Subscription #XYZ" }
+    ];
+
+    // How many random logs do we want after the mandatory ones?
+    const additionalLogCount = 6;
 
     /********************************************
      *   HELPER FUNCTIONS
      ********************************************/
-    function formatDate(date) {
-      // You can customize the locale and format
-      return date.toLocaleString("en-US", { hour12: true });
-    }
 
-    // Returns either the password icon for password-related events, or the email icon otherwise
-    function getEventIcon(event) {
-      if (event.toLowerCase().includes("password")) {
+    // Returns either the password icon if event sounds like password, else the email icon
+    function getEventIcon(eventName) {
+      if (eventName.toLowerCase().includes("password")) {
         return passwordIcon;
       }
       return emailIcon;
     }
 
-    // Insert IP into the IP bar
+    // Formats date with local string (e.g. "2/7/2025, 6:15:00 PM")
+    function formatDate(date) {
+      return date.toLocaleString("en-US", { hour12: true });
+    }
+
+    // Adds a random number of seconds between minSec & maxSec to a date
+    function addRandomSeconds(date, minSec, maxSec) {
+      const newDate = new Date(date);
+      const randomSec = Math.floor(Math.random() * (maxSec - minSec + 1)) + minSec;
+      newDate.setSeconds(newDate.getSeconds() + randomSec);
+      return newDate;
+    }
+
+    // Creates mandatory logs with random intervals in a chain
+    function createMandatoryLogs() {
+      const logs = [];
+      let currentTime = new Date(baseTime); // start exactly at 6:03
+
+      // We'll use gently increasing random intervals to keep it "realistic"
+      // e.g. first event at 6:03, second ~ 6:03:xx, third ~ 6:04:xx, etc.
+      for (let i = 0; i < mandatoryEvents.length; i++) {
+        // The first event is exactly 6:03 PM
+        // After that, add some random seconds
+        if (i > 0) {
+          currentTime = addRandomSeconds(currentTime, 30, 120);
+        }
+        logs.push({
+          ...mandatoryEvents[i],
+          recipient: defaultRecipient,
+          date: new Date(currentTime),
+          tag: "#EmailLog"
+        });
+      }
+      return logs;
+    }
+
+    // Generates a specified number of random logs from the possibleEvents array
+    function createRandomLogs(count, startTime) {
+      const logs = [];
+      let currentTime = new Date(startTime);
+
+      for (let i = 0; i < count; i++) {
+        // Pick a random event object
+        const randomIndex = Math.floor(Math.random() * possibleEvents.length);
+        const evt = possibleEvents[randomIndex];
+
+        // We'll add random intervals from 1 to 5 minutes, for variety
+        currentTime = addRandomSeconds(currentTime, 60, 300);
+
+        logs.push({
+          event: evt.event,
+          subject: evt.subject || "N/A", // fallback if subject is null
+          recipient: evt.subject ? defaultRecipient : "N/A", 
+          date: new Date(currentTime),
+          tag: "#EmailLog"
+        });
+      }
+      return logs;
+    }
+
+    // Renders log items from newest to oldest
+    function renderLogs(logArray) {
+      const logList = document.getElementById("log-list");
+
+      // Sort ascending by date, then display from last to first
+      logArray.sort((a, b) => a.date - b.date);
+
+      for (let i = logArray.length - 1; i >= 0; i--) {
+        const log = logArray[i];
+
+        const logItem = document.createElement("div");
+        logItem.classList.add("log-item");
+
+        // Event block
+        const eventBlock = document.createElement("div");
+        eventBlock.classList.add("log-event");
+        eventBlock.innerHTML = `
+          <img src="${getEventIcon(log.event)}" alt="icon" />
+          <span class="event-name">${log.event}</span>
+        `;
+
+        // Info block
+        const infoBlock = document.createElement("div");
+        infoBlock.classList.add("log-info");
+        infoBlock.innerHTML = `
+          <div><strong>Recipient:</strong> ${log.recipient}</div>
+          <div><strong>Subject:</strong> ${log.subject}</div>
+          <div><strong>Date & Time:</strong> ${formatDate(log.date)}</div>
+          <div><strong>Tag:</strong> ${log.tag}</div>
+        `;
+
+        logItem.appendChild(eventBlock);
+        logItem.appendChild(infoBlock);
+        logList.appendChild(logItem);
+      }
+    }
+
     function setIPBar(ip) {
       const ipBar = document.getElementById("ip-bar");
       ipBar.innerHTML = `
@@ -219,51 +293,26 @@
       `;
     }
 
-    function generateLogs() {
-      const logList = document.getElementById("log-list");
-
-      // Sort logs by ascending date first
-      logs.sort((a, b) => a.date - b.date);
-
-      // We display them from the bottom (oldest) to top (newest)
-      // Easiest method: after sorting ascending, just iterate from last to first
-      for (let i = logs.length - 1; i >= 0; i--) {
-        const log = logs[i];
-        
-        // Create log item
-        const logItem = document.createElement("div");
-        logItem.classList.add("log-item");
-
-        // Create event block with icon
-        const eventBlock = document.createElement("div");
-        eventBlock.classList.add("log-event");
-        eventBlock.innerHTML = `
-          <img src="${getEventIcon(log.event)}" alt="Event Icon" />
-          <span class="event-name">${log.event}</span>
-        `;
-
-        // Create info container
-        const infoContainer = document.createElement("div");
-        infoContainer.classList.add("log-info");
-        infoContainer.innerHTML = `
-          <div><strong>Recipient:</strong> ${log.recipient}</div>
-          <div><strong>Subject:</strong> ${log.subject}</div>
-          <div><strong>Date & Time:</strong> ${formatDate(log.date)}</div>
-          <div><strong>Tag:</strong> ${log.tag}</div>
-        `;
-
-        logItem.appendChild(eventBlock);
-        logItem.appendChild(infoContainer);
-
-        logList.appendChild(logItem);
-      }
-    }
-
     /********************************************
-     *   INITIALIZE PAGE
+     *   MAIN EXECUTION
      ********************************************/
-    setIPBar(ipAddress);
-    generateLogs();
+    (function init() {
+      // 1) Set the IP bar
+      setIPBar(ipAddress);
+
+      // 2) Generate mandatory logs
+      const mandatoryLogs = createMandatoryLogs();
+      
+      // 3) Generate additional random logs, using the last mandatory log time as the start
+      const lastMandatoryTime = mandatoryLogs[mandatoryLogs.length - 1].date;
+      const randomLogs = createRandomLogs(additionalLogCount, lastMandatoryTime);
+
+      // 4) Combine all logs
+      const allLogs = [...mandatoryLogs, ...randomLogs];
+
+      // 5) Render them (newest at the top)
+      renderLogs(allLogs);
+    })();
   </script>
 </body>
 </html>

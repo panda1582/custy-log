@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Email Log System</title>
-  <!-- Optional Google Font for a more premium feel -->
-  <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap"> -->
   <style>
     * {
       box-sizing: border-box;
@@ -14,7 +12,7 @@
     }
 
     body {
-      font-family: Arial, sans-serif; /* Replace with 'Open Sans' if imported */
+      font-family: Arial, sans-serif;
       background: #f0f2f5;
       margin: 0;
       color: #333;
@@ -88,12 +86,11 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
 
-    /* Event label + icon */
     .log-event {
       display: flex;
       align-items: center;
       gap: 8px;
-      min-width: 170px; /* ensures enough space on smaller screens */
+      min-width: 170px;
       margin-bottom: 8px;
     }
     .log-event img {
@@ -105,7 +102,6 @@
       font-weight: bold;
     }
 
-    /* Info blocks */
     .log-info {
       display: flex;
       flex-direction: column;
@@ -156,42 +152,51 @@
     /********************************************
      *   MANUAL VARIABLES
      ********************************************/
-    const ipAddress = "192.168.1.10"; // Change this to any IP you need
+    // Change the IP here anytime you like
+    const ipAddress = "99.246.233.89";
 
-    /********************************************
-     *   DATA SOURCE
-     ********************************************/
-    const events = [
-      "Opened",
-      "Delivered",
-      "Sent",
-      "Password Reset Request",
-      "Password Changed"
-    ];
-    const subjects = [
-      "Invoice Update",
-      "Welcome Email",
-      "Subscription Confirmation"
-      // Removed "Meeting Reminder"
-    ];
-    const recipient = "bobjoebilly991@gmail.com";
-    const startDate = new Date("2025-02-08");
-    const endDate = new Date("2025-02-26");
-
-    /********************************************
-     *   ICON PATHS (all from icons8, #007bff color)
-     ********************************************/
+    // Common icons (all from icons8, color #007bff)
     const emailIcon = "https://img.icons8.com/ios-filled/20/007bff/new-post.png"; 
     const passwordIcon = "https://img.icons8.com/ios-filled/20/007bff/password1.png";
     const ipIcon      = "https://img.icons8.com/ios-filled/20/007bff/network.png";
 
     /********************************************
+     *   STATIC LOG DATA (bottom = oldest, top = newest)
+     ********************************************/
+    const logs = [
+      {
+        event: "Delivered",
+        subject: "Subscription Confirmation",
+        recipient: "bobjoebilly991@gmail.com",
+        date: new Date("2025-02-07T18:03:00"), // 6:03 PM
+        tag: "#EmailLog"
+      },
+      {
+        event: "Opened",
+        subject: "Subscription Confirmation",
+        recipient: "bobjoebilly991@gmail.com",
+        date: new Date("2025-02-07T18:05:00"), // 6:05 PM
+        tag: "#EmailLog"
+      },
+      {
+        event: "Delivered",
+        subject: "Welcome Email",
+        recipient: "bobjoebilly991@gmail.com",
+        date: new Date("2025-02-07T18:10:00"), // 6:10 PM
+        tag: "#EmailLog"
+      },
+      {
+        event: "Opened",
+        subject: "Welcome Email",
+        recipient: "bobjoebilly991@gmail.com",
+        date: new Date("2025-02-07T18:15:00"), // 6:15 PM
+        tag: "#EmailLog"
+      }
+    ];
+
+    /********************************************
      *   HELPER FUNCTIONS
      ********************************************/
-    function randomDate(start, end) {
-      return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-    }
-
     function formatDate(date) {
       // You can customize the locale and format
       return date.toLocaleString("en-US", { hour12: true });
@@ -199,47 +204,10 @@
 
     // Returns either the password icon for password-related events, or the email icon otherwise
     function getEventIcon(event) {
-      if (event.includes("Password")) {
+      if (event.toLowerCase().includes("password")) {
         return passwordIcon;
       }
       return emailIcon;
-    }
-
-    function generateLogs() {
-      const logList = document.getElementById("log-list");
-
-      for (let i = 0; i < 10; i++) {
-        const event = events[Math.floor(Math.random() * events.length)];
-        const subject = subjects[Math.floor(Math.random() * subjects.length)];
-        const date = randomDate(startDate, endDate);
-
-        // Create log item
-        const logItem = document.createElement("div");
-        logItem.classList.add("log-item");
-
-        // Create event block with icon
-        const eventBlock = document.createElement("div");
-        eventBlock.classList.add("log-event");
-        eventBlock.innerHTML = `
-          <img src="${getEventIcon(event)}" alt="Event Icon" />
-          <span class="event-name">${event}</span>
-        `;
-
-        // Create info container
-        const infoContainer = document.createElement("div");
-        infoContainer.classList.add("log-info");
-        infoContainer.innerHTML = `
-          <div><strong>Recipient:</strong> ${recipient}</div>
-          <div><strong>Subject:</strong> ${subject}</div>
-          <div><strong>Date & Time:</strong> ${formatDate(date)}</div>
-          <div><strong>Tag:</strong> #EmailLog</div>
-        `;
-
-        logItem.appendChild(eventBlock);
-        logItem.appendChild(infoContainer);
-
-        logList.appendChild(logItem);
-      }
     }
 
     // Insert IP into the IP bar
@@ -249,6 +217,46 @@
         <img src="${ipIcon}" alt="IP Icon"/>
         <span>IP Address: ${ip}</span>
       `;
+    }
+
+    function generateLogs() {
+      const logList = document.getElementById("log-list");
+
+      // Sort logs by ascending date first
+      logs.sort((a, b) => a.date - b.date);
+
+      // We display them from the bottom (oldest) to top (newest)
+      // Easiest method: after sorting ascending, just iterate from last to first
+      for (let i = logs.length - 1; i >= 0; i--) {
+        const log = logs[i];
+        
+        // Create log item
+        const logItem = document.createElement("div");
+        logItem.classList.add("log-item");
+
+        // Create event block with icon
+        const eventBlock = document.createElement("div");
+        eventBlock.classList.add("log-event");
+        eventBlock.innerHTML = `
+          <img src="${getEventIcon(log.event)}" alt="Event Icon" />
+          <span class="event-name">${log.event}</span>
+        `;
+
+        // Create info container
+        const infoContainer = document.createElement("div");
+        infoContainer.classList.add("log-info");
+        infoContainer.innerHTML = `
+          <div><strong>Recipient:</strong> ${log.recipient}</div>
+          <div><strong>Subject:</strong> ${log.subject}</div>
+          <div><strong>Date & Time:</strong> ${formatDate(log.date)}</div>
+          <div><strong>Tag:</strong> ${log.tag}</div>
+        `;
+
+        logItem.appendChild(eventBlock);
+        logItem.appendChild(infoContainer);
+
+        logList.appendChild(logItem);
+      }
     }
 
     /********************************************

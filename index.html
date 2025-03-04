@@ -3,296 +3,204 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Email Log System</title>
+  <title>Realistic Log Demo</title>
   <style>
     * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+      box-sizing: border-box; margin: 0; padding: 0;
     }
     body {
       font-family: Arial, sans-serif;
       background: #f0f2f5;
-      margin: 0;
       color: #333;
     }
     .navbar {
       background: linear-gradient(45deg, #0069d9, #007bff);
-      color: #fff;
-      padding: 20px;
+      color: #fff; padding: 20px;
       text-align: center;
     }
     .navbar h1 {
-      font-weight: 600;
-      font-size: 1.8rem;
+      font-weight: 600; font-size: 1.8rem;
     }
     .ip-bar {
-      background: #fff;
-      padding: 15px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
+      background: #fff; padding: 15px 20px;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
       box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
     }
     .ip-bar img {
-      width: 20px;
-      height: 20px;
-    }
-    .ip-bar span {
-      font-size: 1rem;
-      font-weight: 500;
+      width: 20px; height: 20px;
     }
     .container {
-      max-width: 900px;
-      margin: 30px auto;
-      padding: 0 20px;
+      max-width: 900px; margin: 30px auto; padding: 0 20px;
     }
     h2 {
-      text-align: center;
-      margin-bottom: 20px;
-      font-weight: 600;
+      text-align: center; margin-bottom: 20px; font-weight: 600;
     }
     .log-list {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+      display: flex; flex-direction: column; gap: 20px;
     }
     .log-item {
       background-color: #ffffff;
-      border-radius: 8px;
-      padding: 15px 20px;
+      border-radius: 8px; padding: 15px 20px;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-items: flex-start;
-      justify-content: space-between;
+      display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px;
       transition: box-shadow 0.3s ease;
     }
     .log-item:hover {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
     .log-event {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 170px;
-      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px; min-width: 170px;
     }
     .log-event img {
-      width: 20px;
-      height: 20px;
+      width: 20px; height: 20px;
     }
     .log-event .event-name {
-      font-size: 1rem;
-      font-weight: bold;
+      font-size: 1rem; font-weight: bold;
     }
     .log-info {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      margin-bottom: 8px;
+      display: flex; flex-direction: column; gap: 5px;
     }
     .log-info div {
-      font-size: 0.95rem;
-      color: #444;
+      font-size: 0.95rem; color: #444;
     }
     .log-info div strong {
-      font-weight: 600;
-      color: #333;
+      font-weight: 600; color: #333;
     }
     @media (max-width: 600px) {
       .log-item {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .log-event {
-        margin-bottom: 10px;
+        flex-direction: column; align-items: flex-start;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
+  <!-- HEADER -->
   <div class="navbar">
-    <h1>Email Log System</h1>
+    <h1>Realistic Log Demo</h1>
   </div>
 
-  <!-- IP Address Bar -->
+  <!-- IP BAR -->
   <div class="ip-bar" id="ip-bar"></div>
 
   <div class="container">
     <h2>Activity Logs</h2>
-    <div class="log-list" id="log-list">
-      <!-- Logs inserted dynamically -->
-    </div>
+    <div class="log-list" id="log-list"></div>
   </div>
 
   <script>
     /********************************************
-     *   CONFIG / CONSTANTS
+     * CONFIG
      ********************************************/
-    const IP_ADDRESS = "99.246.233.89"; // Change anytime
-    const RECIPIENT  = "bobjoebilly991@gmail.com"; // Main user
-    
+    const IP_ADDRESS = "99.246.233.89"; // Change any time
+
+    // The event entries we want, each with a subject & recipient if needed:
+    const EVENT_ENTRIES = [
+      {
+        event: "Project Deleted",
+        subject: "Project #{{proj}}",  // We'll randomize the project ID
+        recipient: "bobjoebilly991@gmail.com"
+      },
+      {
+        event: "Transcript Generated from Project",
+        subject: "Project #{{proj}}",
+        recipient: "bobjoebilly991@gmail.com"
+      },
+      {
+        event: "User Logged in Successfully",
+        subject: null,
+        recipient: null
+      },
+      {
+        event: "User Logged in Successfully",
+        subject: null,
+        recipient: null
+      },
+      {
+        // Subscription event => always #QB49, same email
+        event: "Subscription Update",
+        subject: "Subscription #QB49",
+        recipient: "bobjoebilly991@gmail.com"
+      },
+    ];
+
+    // We'll pick times between these two dates, skipping overnight "midnight hours".
+    // Example: Only random times on 2025-02-07 from 8:00 AM to 8:00 PM
+    const START_DATE = new Date("2025-02-07T08:00:00");
+    const END_DATE   = new Date("2025-02-07T20:00:00");
+
     // Icons
-    const EMAIL_ICON    = "https://img.icons8.com/ios-filled/20/007bff/new-post.png"; 
-    const PASSWORD_ICON = "https://img.icons8.com/ios-filled/20/007bff/password1.png";
-    const IP_ICON       = "https://img.icons8.com/ios-filled/20/007bff/network.png";
-
-    // Purchase base time
-    const BASE_TIME = new Date("2025-02-07T18:03:00"); // 6:03 PM
+    const emailIcon    = "https://img.icons8.com/ios-filled/20/007bff/new-post.png"; 
+    const passwordIcon = "https://img.icons8.com/ios-filled/20/007bff/password1.png";
+    const ipIcon       = "https://img.icons8.com/ios-filled/20/007bff/network.png";
 
     /********************************************
-     *  MANDATORY EVENTS (DELIVERED -> OPENED)
-     ********************************************/
-    const MANDATORY_EVENTS = [
-      { event: "Delivered", subject: "Subscription Confirmation" },
-      { event: "Opened",    subject: "Subscription Confirmation" },
-      { event: "Delivered", subject: "Welcome Email" },
-      { event: "Opened",    subject: "Welcome Email" },
-    ];
-
-    /********************************************
-     *  OTHER POSSIBLE EVENTS
-     ********************************************/
-    const POSSIBLE_EVENTS = [
-      { event: "Password Reset Request",         subject: "Account Security" },
-      { event: "Password Changed",               subject: "Account Security" },
-      { event: "User Logged in Successfully",    subject: null },
-      { event: "Project Saved",                  subject: "Project #{{proj}}" },
-      { event: "Project Deleted",                subject: "Project #{{proj}}" },
-      { event: "Transcript Generated from Project", subject: "Project #{{proj}}" },
-      { event: "Invoice Update",                 subject: "Invoice #{{inv}}" },
-      { event: "Subscription Update",            subject: "Subscription #{{sub}}" }
-    ];
-
-    // Generate this many random follow-up events
-    const ADDITIONAL_LOG_COUNT = 6;
-
-    /********************************************
-     *  UTILITY FUNCTIONS
+     * HELPER FUNCTIONS
      ********************************************/
     function setIPBar(ip) {
       const ipBar = document.getElementById("ip-bar");
       ipBar.innerHTML = `
-        <img src="${IP_ICON}" alt="IP Icon"/>
+        <img src="${ipIcon}" alt="IP Icon" />
         <span>IP Address: ${ip}</span>
       `;
     }
 
+    // Basic icon logic; for more advanced filtering, expand as needed
     function getIconForEvent(eventName) {
+      if (!eventName) return emailIcon; // fallback
       if (eventName.toLowerCase().includes("password")) {
-        return PASSWORD_ICON;
+        return passwordIcon;
       }
-      return EMAIL_ICON;
+      return emailIcon;
     }
 
+    // Format date/time with 12-hour clock
     function formatDate(date) {
       return date.toLocaleString("en-US", { hour12: true });
     }
 
-    // Returns a new date by adding random seconds in [minSec, maxSec]
-    function addRandomSeconds(date, minSec, maxSec) {
-      const newDate = new Date(date);
-      const randomSec = Math.floor(Math.random() * (maxSec - minSec + 1)) + minSec;
-      newDate.setSeconds(newDate.getSeconds() + randomSec);
-      return newDate;
-    }
-
-    // Random integer in [min, max]
+    // Return a random integer in [min, max]
     function randInt(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Random alpha-numeric string of length
-    function randAlphaNum(len = 2) {
-      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-      let result = "";
-      for (let i = 0; i < len; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return result;
+    // Replace placeholders like {{proj}} with random ID
+    function fillSubject(subject) {
+      if (!subject) return "N/A";
+      let s = subject;
+      // e.g. Project #{{proj}} => Project #123
+      s = s.replace("{{proj}}", randInt(100, 999));
+      return s;
     }
 
-    // Replaces placeholders in subject with random IDs
-    function fillSubjectPlaceholders(subject) {
-      if (!subject) return null;
+    // We want a random date/time between startDate & endDate BUT avoid midnight hours
+    // (in this example, we skip any hour < 8 or >= 20 by simply bounding start/end).
+    // If you had a multi-day range, you'd do a loop that re-picks if hour not in [8..20].
+    function randomDateInRange(start, end) {
+      const startMs = start.getTime();
+      const endMs   = end.getTime();
 
-      let replaced = subject;
-      // e.g. Project #{{proj}} -> Project #123
-      replaced = replaced.replace("{{proj}}", randInt(100, 999));
-      // e.g. Invoice #{{inv}} -> Invoice #4567
-      replaced = replaced.replace("{{inv}}", randInt(1000, 9999));
-      // e.g. Subscription #{{sub}} -> Subscription #AB32
-      replaced = replaced.replace("{{sub}}", randAlphaNum(2) + randInt(10, 99));
-
-      return replaced;
+      // Get a random ms from [startMs, endMs]
+      const randomMs = randInt(startMs, endMs);
+      return new Date(randomMs);
     }
 
-    /********************************************
-     *  GENERATE LOGS
-     ********************************************/
-    function createMandatoryLogs() {
-      const logs = [];
-      let currentTime = new Date(BASE_TIME); // start at 6:03 PM
+    // Render logs from oldest at bottom to newest at top
+    function renderLogs(logs) {
+      const container = document.getElementById("log-list");
+      container.innerHTML = ""; // clear old
 
-      for (let i = 0; i < MANDATORY_EVENTS.length; i++) {
-        // Each next mandatory event is 30–120s after the previous
-        if (i > 0) {
-          currentTime = addRandomSeconds(currentTime, 30, 120);
-        }
-        logs.push({
-          event: MANDATORY_EVENTS[i].event,
-          subject: MANDATORY_EVENTS[i].subject,
-          recipient: RECIPIENT,
-          date: new Date(currentTime),
-          tag: "#EmailLog"
-        });
-      }
-      return logs;
-    }
+      // Sort ascending by date
+      logs.sort((a, b) => a.date - b.date);
 
-    function createRandomLogs(count, startTime) {
-      const logs = [];
-      let currentTime = new Date(startTime);
+      // Insert from newest to oldest
+      for (let i = logs.length - 1; i >= 0; i--) {
+        const log = logs[i];
 
-      for (let i = 0; i < count; i++) {
-        const randomEvt = POSSIBLE_EVENTS[Math.floor(Math.random() * POSSIBLE_EVENTS.length)];
-        // Add 1–5 minutes between random events
-        currentTime = addRandomSeconds(currentTime, 60, 300);
+        // Build DOM elements
+        const item = document.createElement("div");
+        item.classList.add("log-item");
 
-        const filledSubj = fillSubjectPlaceholders(randomEvt.subject);
-
-        logs.push({
-          event: randomEvt.event,
-          subject: filledSubj || "N/A",
-          recipient: filledSubj ? RECIPIENT : "N/A",
-          date: new Date(currentTime),
-          tag: "#EmailLog"
-        });
-      }
-      return logs;
-    }
-
-    // Render logs from oldest (bottom) to newest (top)
-    function renderLogs(logArray) {
-      const logList = document.getElementById("log-list");
-
-      // Sort by ascending date first
-      logArray.sort((a, b) => a.date - b.date);
-
-      // Then append from last to first
-      for (let i = logArray.length - 1; i >= 0; i--) {
-        const log = logArray[i];
-
-        // Create log item container
-        const logItem = document.createElement("div");
-        logItem.classList.add("log-item");
-
-        // Event block
         const eventBlock = document.createElement("div");
         eventBlock.classList.add("log-event");
         eventBlock.innerHTML = `
@@ -300,42 +208,40 @@
           <span class="event-name">${log.event}</span>
         `;
 
-        // Info block
         const infoBlock = document.createElement("div");
         infoBlock.classList.add("log-info");
         infoBlock.innerHTML = `
-          <div><strong>Recipient:</strong> ${log.recipient}</div>
-          <div><strong>Subject:</strong> ${log.subject}</div>
+          <div><strong>Recipient:</strong> ${log.recipient ?? "N/A"}</div>
+          <div><strong>Subject:</strong> ${log.subject ?? "N/A"}</div>
           <div><strong>Date & Time:</strong> ${formatDate(log.date)}</div>
-          <div><strong>Tag:</strong> ${log.tag}</div>
+          <div><strong>Tag:</strong> #EmailLog</div>
         `;
 
-        logItem.appendChild(eventBlock);
-        logItem.appendChild(infoBlock);
-
-        logList.appendChild(logItem);
+        item.appendChild(eventBlock);
+        item.appendChild(infoBlock);
+        container.appendChild(item);
       }
     }
 
     /********************************************
-     *  MAIN EXECUTION
+     * MAIN
      ********************************************/
     window.addEventListener("DOMContentLoaded", () => {
       // 1) Show IP
       setIPBar(IP_ADDRESS);
 
-      // 2) Mandatory logs
-      const mandatoryLogs = createMandatoryLogs();
+      // 2) Build logs with random times
+      const logs = EVENT_ENTRIES.map(evt => {
+        return {
+          event: evt.event,
+          subject: fillSubject(evt.subject),
+          recipient: evt.recipient ?? "N/A",
+          date: randomDateInRange(START_DATE, END_DATE)
+        };
+      });
 
-      // 3) Extra random logs (after last mandatory)
-      const lastMandatory = mandatoryLogs[mandatoryLogs.length - 1].date;
-      const randomLogs = createRandomLogs(ADDITIONAL_LOG_COUNT, lastMandatory);
-
-      // 4) Combine
-      const allLogs = [...mandatoryLogs, ...randomLogs];
-
-      // 5) Render
-      renderLogs(allLogs);
+      // 3) Render
+      renderLogs(logs);
     });
   </script>
 </body>

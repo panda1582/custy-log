@@ -134,65 +134,67 @@
     /********************************************
      *   CONFIG / CONSTANTS
      ********************************************/
-    const ipAddress = "99.246.233.89"; // Change anytime
-    const emailIcon = "https://img.icons8.com/ios-filled/20/007bff/new-post.png"; 
-    const passwordIcon = "https://img.icons8.com/ios-filled/20/007bff/password1.png";
-    const ipIcon = "https://img.icons8.com/ios-filled/20/007bff/network.png";
+    const IP_ADDRESS = "99.246.233.89"; // Change anytime
+    const RECIPIENT  = "bobjoebilly991@gmail.com"; // Main user
+    
+    // Icons
+    const EMAIL_ICON    = "https://img.icons8.com/ios-filled/20/007bff/new-post.png"; 
+    const PASSWORD_ICON = "https://img.icons8.com/ios-filled/20/007bff/password1.png";
+    const IP_ICON       = "https://img.icons8.com/ios-filled/20/007bff/network.png";
 
-    // Base time (purchase time)
-    const baseTime = new Date("2025-02-07T18:03:00"); // 6:03 PM
+    // Purchase base time
+    const BASE_TIME = new Date("2025-02-07T18:03:00"); // 6:03 PM
 
-    // We'll log everything for this user:
-    const defaultRecipient = "bobjoebilly991@gmail.com";
-
-    // Mandatory logs (delivered->opened for Subscription Confirmation, then Welcome Email)
-    const mandatorySteps = [
+    /********************************************
+     *  MANDATORY EVENTS (DELIVERED -> OPENED)
+     ********************************************/
+    const MANDATORY_EVENTS = [
       { event: "Delivered", subject: "Subscription Confirmation" },
       { event: "Opened",    subject: "Subscription Confirmation" },
       { event: "Delivered", subject: "Welcome Email" },
-      { event: "Opened",    subject: "Welcome Email" }
+      { event: "Opened",    subject: "Welcome Email" },
     ];
 
     /********************************************
-     *   OTHER POSSIBLE EVENTS
-     *   Subject lines will have placeholders for random IDs
+     *  OTHER POSSIBLE EVENTS
      ********************************************/
-    const possibleEvents = [
-      { event: "Password Reset Request", subject: "Account Security" },
-      { event: "Password Changed", subject: "Account Security" },
-      { event: "User Logged in Successfully", subject: null },
-      { event: "Project Saved", subject: "Project #{{proj}}" },
-      { event: "Project Deleted", subject: "Project #{{proj}}" },
+    const POSSIBLE_EVENTS = [
+      { event: "Password Reset Request",         subject: "Account Security" },
+      { event: "Password Changed",               subject: "Account Security" },
+      { event: "User Logged in Successfully",    subject: null },
+      { event: "Project Saved",                  subject: "Project #{{proj}}" },
+      { event: "Project Deleted",                subject: "Project #{{proj}}" },
       { event: "Transcript Generated from Project", subject: "Project #{{proj}}" },
-      { event: "Invoice Update", subject: "Invoice #{{inv}}" },
-      { event: "Subscription Update", subject: "Subscription #{{sub}}" }
+      { event: "Invoice Update",                 subject: "Invoice #{{inv}}" },
+      { event: "Subscription Update",            subject: "Subscription #{{sub}}" }
     ];
 
-    // Number of extra logs to generate
-    const additionalLogCount = 6;
+    // Generate this many random follow-up events
+    const ADDITIONAL_LOG_COUNT = 6;
 
     /********************************************
-     *   HELPER FUNCTIONS
+     *  UTILITY FUNCTIONS
      ********************************************/
     function setIPBar(ip) {
-      document.getElementById("ip-bar").innerHTML = `
-        <img src="${ipIcon}" alt="IP Icon"/>
+      const ipBar = document.getElementById("ip-bar");
+      ipBar.innerHTML = `
+        <img src="${IP_ICON}" alt="IP Icon"/>
         <span>IP Address: ${ip}</span>
       `;
     }
 
-    function getEventIcon(eventName) {
+    function getIconForEvent(eventName) {
       if (eventName.toLowerCase().includes("password")) {
-        return passwordIcon;
+        return PASSWORD_ICON;
       }
-      return emailIcon;
+      return EMAIL_ICON;
     }
 
     function formatDate(date) {
       return date.toLocaleString("en-US", { hour12: true });
     }
 
-    // Adds random seconds (between minSec and maxSec) to a date
+    // Returns a new date by adding random seconds in [minSec, maxSec]
     function addRandomSeconds(date, minSec, maxSec) {
       const newDate = new Date(date);
       const randomSec = Math.floor(Math.random() * (maxSec - minSec + 1)) + minSec;
@@ -200,85 +202,52 @@
       return newDate;
     }
 
-    // Generate a random integer within [min, max]
+    // Random integer in [min, max]
     function randInt(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Generate a random alphanumeric string
-    function randAlphaNum(length = 2) {
+    // Random alpha-numeric string of length
+    function randAlphaNum(len = 2) {
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
       let result = "";
-      for (let i = 0; i < length; i++) {
+      for (let i = 0; i < len; i++) {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
       }
       return result;
     }
 
-    // Replace placeholders {{proj}}, {{inv}}, {{sub}} with random realistic IDs
-    function fillPlaceholders(subject) {
-      if (!subject) return null; // If subject is null, just return it
-      let newSubject = subject;
+    // Replaces placeholders in subject with random IDs
+    function fillSubjectPlaceholders(subject) {
+      if (!subject) return null;
 
-      // For projects: random 3-digit integer
-      newSubject = newSubject.replace("{{proj}}", randInt(100, 999));
-      // For invoice: random 4-digit integer
-      newSubject = newSubject.replace("{{inv}}", randInt(1000, 9999));
-      // For subscription: e.g., AB12
-      newSubject = newSubject.replace("{{sub}}", randAlphaNum(2) + randInt(10, 99));
+      let replaced = subject;
+      // e.g. Project #{{proj}} -> Project #123
+      replaced = replaced.replace("{{proj}}", randInt(100, 999));
+      // e.g. Invoice #{{inv}} -> Invoice #4567
+      replaced = replaced.replace("{{inv}}", randInt(1000, 9999));
+      // e.g. Subscription #{{sub}} -> Subscription #AB32
+      replaced = replaced.replace("{{sub}}", randAlphaNum(2) + randInt(10, 99));
 
-      return newSubject;
+      return replaced;
     }
 
-    // Create mandatory logs with random spacing
+    /********************************************
+     *  GENERATE LOGS
+     ********************************************/
     function createMandatoryLogs() {
       const logs = [];
-      let currentTime = new Date(baseTime);
+      let currentTime = new Date(BASE_TIME); // start at 6:03 PM
 
-      for (let i = 0; i < mandatorySteps.length; i++) {
-        if (i === 0) {
-          // The first log is exactly at 6:03 PM
-          logs.push({
-            event: mandatorySteps[i].event,
-            subject: mandatorySteps[i].subject,
-            recipient: defaultRecipient,
-            date: new Date(currentTime),
-            tag: "#EmailLog"
-          });
-        } else {
-          // Next events: random delay 30-120 seconds
+      for (let i = 0; i < MANDATORY_EVENTS.length; i++) {
+        // Each next mandatory event is 30–120s after the previous
+        if (i > 0) {
           currentTime = addRandomSeconds(currentTime, 30, 120);
-          logs.push({
-            event: mandatorySteps[i].event,
-            subject: mandatorySteps[i].subject,
-            recipient: defaultRecipient,
-            date: new Date(currentTime),
-            tag: "#EmailLog"
-          });
         }
-      }
-      return logs;
-    }
-
-    // Generate random logs from possibleEvents
-    function createRandomLogs(count, startTime) {
-      const logs = [];
-      let currentTime = new Date(startTime);
-
-      for (let i = 0; i < count; i++) {
-        // Pick random event from possibleEvents
-        const evt = possibleEvents[Math.floor(Math.random() * possibleEvents.length)];
-
-        // Add a random time gap (1-5 minutes)
-        currentTime = addRandomSeconds(currentTime, 60, 300);
-
-        // Fill placeholders in subject
-        const filledSubject = fillPlaceholders(evt.subject);
-
         logs.push({
-          event: evt.event,
-          subject: filledSubject || "N/A",
-          recipient: filledSubject ? defaultRecipient : "N/A",
+          event: MANDATORY_EVENTS[i].event,
+          subject: MANDATORY_EVENTS[i].subject,
+          recipient: RECIPIENT,
           date: new Date(currentTime),
           tag: "#EmailLog"
         });
@@ -286,16 +255,40 @@
       return logs;
     }
 
-    // Insert logs into DOM newest at top
+    function createRandomLogs(count, startTime) {
+      const logs = [];
+      let currentTime = new Date(startTime);
+
+      for (let i = 0; i < count; i++) {
+        const randomEvt = POSSIBLE_EVENTS[Math.floor(Math.random() * POSSIBLE_EVENTS.length)];
+        // Add 1–5 minutes between random events
+        currentTime = addRandomSeconds(currentTime, 60, 300);
+
+        const filledSubj = fillSubjectPlaceholders(randomEvt.subject);
+
+        logs.push({
+          event: randomEvt.event,
+          subject: filledSubj || "N/A",
+          recipient: filledSubj ? RECIPIENT : "N/A",
+          date: new Date(currentTime),
+          tag: "#EmailLog"
+        });
+      }
+      return logs;
+    }
+
+    // Render logs from oldest (bottom) to newest (top)
     function renderLogs(logArray) {
       const logList = document.getElementById("log-list");
 
-      // Sort ascending by date, then loop backward
+      // Sort by ascending date first
       logArray.sort((a, b) => a.date - b.date);
 
+      // Then append from last to first
       for (let i = logArray.length - 1; i >= 0; i--) {
         const log = logArray[i];
 
+        // Create log item container
         const logItem = document.createElement("div");
         logItem.classList.add("log-item");
 
@@ -303,7 +296,7 @@
         const eventBlock = document.createElement("div");
         eventBlock.classList.add("log-event");
         eventBlock.innerHTML = `
-          <img src="${getEventIcon(log.event)}" alt="icon" />
+          <img src="${getIconForEvent(log.event)}" alt="icon" />
           <span class="event-name">${log.event}</span>
         `;
 
@@ -319,4 +312,31 @@
 
         logItem.appendChild(eventBlock);
         logItem.appendChild(infoBlock);
-        logList
+
+        logList.appendChild(logItem);
+      }
+    }
+
+    /********************************************
+     *  MAIN EXECUTION
+     ********************************************/
+    window.addEventListener("DOMContentLoaded", () => {
+      // 1) Show IP
+      setIPBar(IP_ADDRESS);
+
+      // 2) Mandatory logs
+      const mandatoryLogs = createMandatoryLogs();
+
+      // 3) Extra random logs (after last mandatory)
+      const lastMandatory = mandatoryLogs[mandatoryLogs.length - 1].date;
+      const randomLogs = createRandomLogs(ADDITIONAL_LOG_COUNT, lastMandatory);
+
+      // 4) Combine
+      const allLogs = [...mandatoryLogs, ...randomLogs];
+
+      // 5) Render
+      renderLogs(allLogs);
+    });
+  </script>
+</body>
+</html>

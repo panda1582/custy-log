@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Customer Email Log</title>
+  <title>Email Log System</title>
+  <!-- Optional Google Font for a more premium feel -->
+  <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap"> -->
   <style>
     * {
       box-sizing: border-box;
@@ -12,25 +14,25 @@
     }
 
     body {
-      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-      background: #f7f9fc;
+      font-family: Arial, sans-serif; /* Replace with 'Open Sans' if imported */
+      background: #f0f2f5;
+      margin: 0;
       color: #333;
-      line-height: 1.6;
     }
 
+    /* ===== NAVBAR / HEADER ===== */
     .navbar {
       background: linear-gradient(45deg, #0069d9, #007bff);
       color: #fff;
       padding: 20px;
       text-align: center;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      border-bottom: 2px solid rgba(0, 0, 0, 0.05);
     }
     .navbar h1 {
       font-weight: 600;
       font-size: 1.8rem;
     }
 
+    /* ===== IP BAR ===== */
     .ip-bar {
       background: #fff;
       padding: 15px 20px;
@@ -38,20 +40,19 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      margin: 20px auto;
-      max-width: 900px;
-      border-radius: 5px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
     }
     .ip-bar img {
       width: 20px;
       height: 20px;
+      display: inline-block;
     }
     .ip-bar span {
       font-size: 1rem;
       font-weight: 500;
     }
 
+    /* ===== MAIN CONTAINER ===== */
     .container {
       max-width: 900px;
       margin: 30px auto;
@@ -61,21 +62,23 @@
       text-align: center;
       margin-bottom: 20px;
       font-weight: 600;
-      color: #222;
     }
 
+    /* ===== LOG LIST ===== */
     .log-list {
       display: flex;
       flex-direction: column;
       gap: 20px;
     }
 
+    /* ===== LOG CARD ===== */
     .log-item {
       background-color: #ffffff;
       border-radius: 8px;
       padding: 15px 20px;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
       display: flex;
+      flex-direction: row;
       flex-wrap: wrap;
       align-items: flex-start;
       justify-content: space-between;
@@ -85,11 +88,12 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
 
+    /* Event label + icon */
     .log-event {
       display: flex;
       align-items: center;
       gap: 8px;
-      min-width: 200px;
+      min-width: 170px; /* ensures enough space on smaller screens */
       margin-bottom: 8px;
     }
     .log-event img {
@@ -101,6 +105,7 @@
       font-weight: bold;
     }
 
+    /* Info blocks */
     .log-info {
       display: flex;
       flex-direction: column;
@@ -116,6 +121,7 @@
       color: #333;
     }
 
+    /* Responsive design adjustments */
     @media (max-width: 600px) {
       .log-item {
         flex-direction: column;
@@ -129,12 +135,14 @@
 </head>
 <body>
 
+  <!-- Header / Navbar -->
   <div class="navbar">
-    <h1>Customer Email Log</h1>
+    <h1>Email Log System</h1>
   </div>
 
+  <!-- IP Address Bar -->
   <div class="ip-bar" id="ip-bar">
-    <!-- IP Icon + IP text will be inserted dynamically -->
+    <!-- IP Icon + IP text will be inserted by JS -->
   </div>
 
   <div class="container">
@@ -145,117 +153,107 @@
   </div>
 
   <script>
-    const ipAddress = "99.246.233.89"; // Change this to any IP you need
+    /********************************************
+     *   MANUAL VARIABLES
+     ********************************************/
+    const ipAddress = "192.168.1.10"; // Change this to any IP you need
 
-    // Email subjects with restrictions:
-    // "Welcome Email" and "Subscription Confirmation" only on start date.
-    // "Invoice Update" only in the middle/end.
-    const emailSubjects = [
-      "Welcome Email",
-      "Subscription Confirmation",
-      "Invoice Update"
+    /********************************************
+     *   DATA SOURCE
+     ********************************************/
+    const events = [
+      "Opened",
+      "Delivered",
+      "Sent",
+      "Password Reset Request",
+      "Password Changed"
     ];
-
+    const subjects = [
+      "Invoice Update",
+      "Welcome Email",
+      "Subscription Confirmation"
+      // Removed "Meeting Reminder"
+    ];
     const recipient = "bobjoebilly991@gmail.com";
     const startDate = new Date("2025-02-08");
     const endDate = new Date("2025-02-26");
 
+    /********************************************
+     *   ICON PATHS (all from icons8, #007bff color)
+     ********************************************/
     const emailIcon = "https://img.icons8.com/ios-filled/20/007bff/new-post.png"; 
     const passwordIcon = "https://img.icons8.com/ios-filled/20/007bff/password1.png";
-    const devIcon = "https://img.icons8.com/ios-filled/20/007bff/source-code.png"; 
-    const ipIcon = "https://img.icons8.com/ios-filled/20/007bff/network.png";
+    const ipIcon      = "https://img.icons8.com/ios-filled/20/007bff/network.png";
 
-    // Returns a random date between two dates.
+    /********************************************
+     *   HELPER FUNCTIONS
+     ********************************************/
     function randomDate(start, end) {
       return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
     }
 
-    // Formats the date to a localized string.
     function formatDate(date) {
+      // You can customize the locale and format
       return date.toLocaleString("en-US", { hour12: true });
     }
 
-    // Returns the appropriate icon for an event.
+    // Returns either the password icon for password-related events, or the email icon otherwise
     function getEventIcon(event) {
-      if (event.includes("Password")) return passwordIcon;
-      if (["Sent", "Delivered", "Opened"].includes(event)) return emailIcon;
-      return devIcon;
+      if (event.includes("Password")) {
+        return passwordIcon;
+      }
+      return emailIcon;
     }
 
-    // Generates an email chain with three events:
-    // Sent (at 7:40 PM), Delivered (+5 mins), Opened (+10 mins)
-    function generateEmailChain(subject, baseDate) {
-      // Force the base time to 7:40 PM on that day.
-      let sentTime = new Date(baseDate);
-      sentTime.setHours(19, 40, 0, 0);
-
-      const deliveredTime = new Date(sentTime.getTime() + 5 * 60000);
-      const openedTime = new Date(sentTime.getTime() + 10 * 60000);
-
-      return [
-        { event: "Sent", date: sentTime },
-        { event: "Delivered", date: deliveredTime },
-        { event: "Opened", date: openedTime }
-      ];
-    }
-
-    // Generates logs. For email events, it creates an email chain (Sent, Delivered, Opened).
     function generateLogs() {
       const logList = document.getElementById("log-list");
-      
-      // For demonstration, generate 5 email chains.
-      for (let i = 0; i < 5; i++) {
-        // Randomly pick an email subject.
-        const subject = emailSubjects[Math.floor(Math.random() * emailSubjects.length)];
-        let baseDate;
 
-        if (subject === "Welcome Email" || subject === "Subscription Confirmation") {
-          // Force the date to be the start date.
-          baseDate = new Date(startDate);
-        } else if (subject === "Invoice Update") {
-          // Invoice Update is set to a random date after startDate (middle or end).
-          const invoiceStart = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
-          baseDate = randomDate(invoiceStart, endDate);
-        }
-        // Set the time to 7:40 PM regardless.
-        baseDate.setHours(19, 40, 0, 0);
+      for (let i = 0; i < 10; i++) {
+        const event = events[Math.floor(Math.random() * events.length)];
+        const subject = subjects[Math.floor(Math.random() * subjects.length)];
+        const date = randomDate(startDate, endDate);
 
-        // Generate the email chain.
-        const chain = generateEmailChain(subject, baseDate);
+        // Create log item
+        const logItem = document.createElement("div");
+        logItem.classList.add("log-item");
 
-        // Append each event in the chain to the log list.
-        chain.forEach(item => {
-          const logItem = document.createElement("div");
-          logItem.classList.add("log-item");
+        // Create event block with icon
+        const eventBlock = document.createElement("div");
+        eventBlock.classList.add("log-event");
+        eventBlock.innerHTML = `
+          <img src="${getEventIcon(event)}" alt="Event Icon" />
+          <span class="event-name">${event}</span>
+        `;
 
-          const eventBlock = document.createElement("div");
-          eventBlock.classList.add("log-event");
-          eventBlock.innerHTML = `
-            <img src="${getEventIcon(item.event)}" alt="Event Icon" />
-            <span class="event-name">${item.event}</span>
-          `;
+        // Create info container
+        const infoContainer = document.createElement("div");
+        infoContainer.classList.add("log-info");
+        infoContainer.innerHTML = `
+          <div><strong>Recipient:</strong> ${recipient}</div>
+          <div><strong>Subject:</strong> ${subject}</div>
+          <div><strong>Date & Time:</strong> ${formatDate(date)}</div>
+          <div><strong>Tag:</strong> #EmailLog</div>
+        `;
 
-          const infoContainer = document.createElement("div");
-          infoContainer.classList.add("log-info");
-          infoContainer.innerHTML = `<div><strong>Recipient:</strong> ${recipient}</div>`;
-          infoContainer.innerHTML += `<div><strong>Subject:</strong> ${subject}</div>`;
-          infoContainer.innerHTML += `<div><strong>Date & Time:</strong> ${formatDate(item.date)}</div>`;
-          infoContainer.innerHTML += `<div><strong>Tag:</strong> #ActivityLog</div>`;
+        logItem.appendChild(eventBlock);
+        logItem.appendChild(infoContainer);
 
-          logItem.appendChild(eventBlock);
-          logItem.appendChild(infoContainer);
-          logList.appendChild(logItem);
-        });
+        logList.appendChild(logItem);
       }
     }
 
+    // Insert IP into the IP bar
     function setIPBar(ip) {
-      document.getElementById("ip-bar").innerHTML = `
+      const ipBar = document.getElementById("ip-bar");
+      ipBar.innerHTML = `
         <img src="${ipIcon}" alt="IP Icon"/>
         <span>IP Address: ${ip}</span>
       `;
     }
 
+    /********************************************
+     *   INITIALIZE PAGE
+     ********************************************/
     setIPBar(ipAddress);
     generateLogs();
   </script>
